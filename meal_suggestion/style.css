@@ -1,0 +1,467 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 650px;
+    min-height: 550px;
+    padding: 40px;
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+/* --- HIỆU ỨNG CHUYỂN BƯỚC --- */
+.step-section {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.step-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- FORM --- */
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+input, select {
+    width: 100%; padding: 12px 15px;
+    border: 2px solid #eee; border-radius: 12px;
+    font-size: 16px; box-sizing: border-box;
+    transition: 0.3s; font-family: 'Quicksand', sans-serif;
+}
+input:focus, select:focus { border-color: #42b983; outline: none; }
+
+/* --- BUTTONS --- */
+.btn {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: 0.2s;
+    text-align: center; display: block;
+    text-decoration: none; box-sizing: border-box;
+    margin-top: 10px;
+}
+.btn-primary {
+    background: linear-gradient(to right, #11998e, #38ef7d);
+    color: white;
+    box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56, 239, 125, 0.6); }
+
+/* Nút Hoàn thành & Nút Custom */
+.btn-finish { background: #38ef7d; color: white; }
+.btn-finish:hover { background: #2ecc71; }
+
+.btn-custom { background: #ff7675; color: white; }
+.btn-custom:hover { background: #d63031; }
+
+/* --- VÒNG TRÒN CALO --- */
+.result-container { text-align: center; padding: 10px 0; }
+.circle-outer {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(#38ef7d var(--percent), #f0f0f0 0);
+    margin: 0 auto 20px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+.circle-inner {
+    width: 140px; height: 140px;
+    background: white; border-radius: 50%;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+}
+.kcal-number { font-size: 32px; font-weight: 800; color: #11998e; }
+.kcal-unit { font-size: 14px; color: #888; }
+
+/* --- THẺ THỰC ĐƠN --- */
+.menu-card {
+    background: #f9fbfd; border-radius: 15px;
+    padding: 20px; margin-bottom: 20px;
+    border-left: 5px solid #38ef7d;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+}
+.meal-row {
+    display: flex; justify-content: space-between;
+    margin-bottom: 10px; font-size: 15px;
+    border-bottom: 1px dashed #eee; padding-bottom: 5px;
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-name { color: #555; flex: 1; text-align: left; }
+.meal-cal { font-weight: 600; color: #11998e; margin-left: 10px; }
+
+/* --- DASHBOARD ELEMENTS --- */
+.progress-container {
+    width: 100%; background: #eee; height: 10px;
+    border-radius: 5px; overflow: hidden; margin-bottom: 20px;
+}
+.progress-bar { height: 100%; background: #11998e; transition: width 0.5s; }
+
+.alert-adjust {
+    background: #fff3cd; color: #856404;
+    padding: 10px; border-radius: 8px;
+    margin-bottom: 15px; font-size: 14px; text-align: center;
+    border: 1px solid #ffeeba;
+}
+
+.action-buttons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
+}
+
+.custom-input-box {
+    display: none; background: #f8f9fa;
+    padding: 15px; border-radius: 10px;
+    margin-top: 15px; border: 1px solid #ddd;
+}
+/* --- GIỮ NGUYÊN CODE CŨ Ở TRÊN --- */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 650px;
+    min-height: 550px;
+    padding: 40px;
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+/* --- STEP SYSTEM --- */
+.step-section {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.step-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- FORM --- */
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+input, select {
+    width: 100%; padding: 12px 15px;
+    border: 2px solid #eee; border-radius: 12px;
+    font-size: 16px; box-sizing: border-box;
+    transition: 0.3s; font-family: 'Quicksand', sans-serif;
+}
+input:focus, select:focus { border-color: #42b983; outline: none; }
+
+/* --- BUTTONS --- */
+.btn {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: 0.2s;
+    text-align: center; display: block;
+    text-decoration: none; box-sizing: border-box;
+    margin-top: 10px;
+}
+.btn-primary {
+    background: linear-gradient(to right, #11998e, #38ef7d);
+    color: white;
+    box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56, 239, 125, 0.6); }
+
+/* Nút Hoàn thành & Nút Custom */
+.btn-finish { background: #38ef7d; color: white; }
+.btn-finish:hover { background: #2ecc71; }
+
+.btn-custom { background: #ff7675; color: white; }
+.btn-custom:hover { background: #d63031; }
+
+/* --- VÒNG TRÒN CALO --- */
+.result-container { text-align: center; padding: 10px 0; }
+.circle-outer {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(#38ef7d var(--percent), #f0f0f0 0);
+    margin: 0 auto 20px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+.circle-inner {
+    width: 140px; height: 140px;
+    background: white; border-radius: 50%;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+}
+.kcal-number { font-size: 32px; font-weight: 800; color: #11998e; }
+.kcal-unit { font-size: 14px; color: #888; }
+
+/* --- THẺ THỰC ĐƠN MỚI (CẬP NHẬT) --- */
+.menu-card {
+    background: #f9fbfd; border-radius: 15px;
+    padding: 0; margin-bottom: 20px;
+    border: 1px solid #eee;
+    overflow: hidden;
+}
+
+.meal-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; border-bottom: 1px solid #eee;
+    transition: 0.3s;
+}
+.meal-row:last-child { border-bottom: none; }
+
+/* Trạng thái bữa ăn */
+.meal-row.meal-done {
+    background-color: #e8f5e9; /* Xanh nhạt - Đã ăn xong */
+    opacity: 0.7;
+}
+.meal-row.meal-active {
+    background-color: #fff; /* Trắng sáng - Đang ăn */
+    border-left: 5px solid #38ef7d;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.meal-row.meal-pending {
+    background-color: #f9f9f9; /* Xám - Chưa tới */
+    color: #999;
+}
+
+.meal-name { 
+    flex: 1; 
+    text-align: left; 
+    padding-right: 10px; /* Tạo khoảng cách với số calo */
+    line-height: 1.4;    /* Tăng khoảng cách dòng cho dễ đọc */
+    font-size: 14px;     /* Chỉnh cỡ chữ vừa phải */
+}
+
+
+.meal-cal { font-weight: 600; color: #11998e; margin-left: 10px; min-width: 60px; text-align: right; }
+.meal-badge {
+    font-size: 10px; padding: 3px 6px; border-radius: 4px;
+    margin-right: 8px; font-weight: bold; text-transform: uppercase;
+}
+.badge-done { background: #4caf50; color: white; }
+.badge-active { background: #ff9800; color: white; }
+.badge-pending { background: #9e9e9e; color: white; }
+
+/* --- DASHBOARD ELEMENTS --- */
+.progress-container {
+    width: 100%; background: #eee; height: 10px;
+    border-radius: 5px; overflow: hidden; margin-bottom: 20px;
+}
+.progress-bar { height: 100%; background: #11998e; transition: width 0.5s; }
+
+.alert-adjust {
+    background: #fff3cd; color: #856404;
+    padding: 10px; border-radius: 8px;
+    margin-bottom: 15px; font-size: 14px; text-align: center;
+    border: 1px solid #ffeeba;
+}
+
+.action-buttons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
+}
+
+.custom-input-box {
+    display: none; background: #f8f9fa;
+    padding: 15px; border-radius: 10px;
+    margin-top: 15px; border: 1px solid #ddd;
+}
+/* --- GIỮ NGUYÊN CODE CŨ TỪ TRƯỚC --- */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 650px;
+    min-height: 550px;
+    padding: 40px;
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+h2 {
+    text-align: center; color: #2c3e50; margin-bottom: 25px; font-weight: 700;
+}
+
+.step-section { display: none; animation: fadeIn 0.5s ease; }
+.step-section.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- FORM --- */
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+input, select {
+    width: 100%; padding: 12px 15px;
+    border: 2px solid #eee; border-radius: 12px;
+    font-size: 16px; box-sizing: border-box;
+    transition: 0.3s; font-family: 'Quicksand', sans-serif;
+}
+input:focus, select:focus { border-color: #42b983; outline: none; }
+
+/* --- BUTTONS --- */
+.btn {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: 0.2s;
+    text-align: center; display: block;
+    text-decoration: none; box-sizing: border-box; margin-top: 10px;
+}
+.btn-primary {
+    background: linear-gradient(to right, #11998e, #38ef7d); color: white;
+    box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56, 239, 125, 0.6); }
+
+.btn-finish { background: #38ef7d; color: white; }
+.btn-finish:hover { background: #2ecc71; }
+
+.btn-custom { background: #ff7675; color: white; }
+.btn-custom:hover { background: #d63031; }
+
+/* --- VÒNG TRÒN CALO --- */
+.result-container { text-align: center; padding: 10px 0; }
+.circle-outer {
+    width: 160px; height: 160px; border-radius: 50%;
+    background: conic-gradient(#38ef7d var(--percent), #f0f0f0 0);
+    margin: 0 auto 20px; display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+.circle-inner {
+    width: 140px; height: 140px; background: white; border-radius: 50%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.kcal-number { font-size: 32px; font-weight: 800; color: #11998e; }
+.kcal-unit { font-size: 14px; color: #888; }
+
+/* --- MENU CARD --- */
+.menu-card {
+    background: #f9fbfd; border-radius: 15px; padding: 0; margin-bottom: 20px;
+    border: 1px solid #eee; overflow: hidden;
+}
+.meal-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; border-bottom: 1px solid #eee; transition: 0.3s;
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-row.meal-done { background-color: #e8f5e9; opacity: 0.7; }
+.meal-row.meal-active { background-color: #fff; border-left: 5px solid #38ef7d; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.meal-row.meal-pending { background-color: #f9f9f9; color: #999; }
+.meal-name { flex: 1; text-align: left; }
+.meal-cal { font-weight: 600; color: #11998e; margin-left: 10px; min-width: 60px; text-align: right; }
+.meal-badge {
+    font-size: 10px; padding: 3px 6px; border-radius: 4px;
+    margin-right: 8px; font-weight: bold; text-transform: uppercase;
+}
+.badge-done { background: #4caf50; color: white; }
+.badge-active { background: #ff9800; color: white; }
+.badge-pending { background: #9e9e9e; color: white; }
+
+/* --- DASHBOARD ELEMENTS --- */
+.progress-container {
+    width: 100%; background: #eee; height: 10px;
+    border-radius: 5px; overflow: hidden; margin-bottom: 20px;
+}
+.progress-bar { height: 100%; background: #11998e; transition: width 0.5s; }
+
+.alert-adjust {
+    background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px;
+    margin-bottom: 15px; font-size: 14px; text-align: center; border: 1px solid #ffeeba;
+}
+
+.action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+
+.custom-input-box {
+    display: none; background: #f8f9fa; padding: 15px; border-radius: 10px;
+    margin-top: 15px; border: 1px solid #ddd;
+}
+
+/* --- PHẦN MỚI: CHART & SUMMARY --- */
+.chart-box {
+    background: #fff; border-radius: 15px; padding: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
+}
+.summary-stats {
+    display: flex; justify-content: space-around; margin-bottom: 20px;
+}
+.stat-item {
+    text-align: center; background: #f1f8e9; padding: 15px;
+    border-radius: 10px; width: 45%;
+}
+.stat-value { font-size: 20px; font-weight: bold; color: #2e7d32; }
+.stat-label { font-size: 12px; color: #555; }
+.meal-name.changed {
+    color: #d35400; /* Màu cam đậm */
+    font-weight: bold;
+    font-style: italic;
+}
+
+/* Style cho ghi chú điều chỉnh khẩu phần */
+.adjust-note {
+    font-size: 12px;
+    color: #e74c3c;
+    display: block;
+    margin-top: 4px;
+}
