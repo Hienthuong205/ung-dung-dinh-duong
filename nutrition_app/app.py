@@ -7,13 +7,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import re
 import random
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'chia_khoa_bao_mat_cua_ban'
 
 # --- 1. CẤU HÌNH ---
-BASE_DIR = r"D:\nutrition_app"
-if not os.path.exists(BASE_DIR): os.makedirs(BASE_DIR)
+# Tự động lấy đường dẫn thư mục chứa file app.py hiện tại
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 db_path = os.path.join(BASE_DIR, "users.db")
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
@@ -24,12 +25,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'index'
 
-# --- 2. AI CONFIG (SỬA LỖI 500 TẠI ĐÂY) ---
-# Key của bạn
+# --- 2. AI CONFIG (Chỉ dùng cho phản hồi cuối tuần) ---
 GOOGLE_API_KEY = "AIzaSyCy2DPwd5M1GnJN8B7e4o5yoUi22TxMq2w"
 genai.configure(api_key=GOOGLE_API_KEY)
-
-# *** ĐÃ SỬA: Dùng 'gemini-pro' để chạy ổn định, không bị lỗi 404 ***
 model = genai.GenerativeModel('gemini-pro')
 
 # --- 3. DATABASE ---
@@ -48,56 +46,25 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-# --- 4. DANH SÁCH MÓN ĂN NHẸ "CỨU ĐÓI" (KHI BỊ PHẠT) ---
+# --- 4. DANH SÁCH MÓN ĂN NHẸ "PHẠT" KHI ĂN LỐ ---
 LIGHT_MEALS = [
-    {"name": "🥗 Salad dưa leo cà chua (Sốt chanh, không đường)", "calo": 50},
-    {"name": "🥒 Rau củ luộc kho quẹt (Ăn nhiều rau)", "calo": 80},
-    {"name": "🍲 Canh bí đao nấu tôm khô (Chỉ uống nước và ăn cái)", "calo": 70},
-    {"name": "🥬 Bắp cải luộc + 1 quả trứng luộc", "calo": 90},
-    {"name": "🥣 Súp rau củ thập cẩm (Không tinh bột)", "calo": 60},
-    {"name": "🥗 Nộm su hào cà rốt (Không lạc/đậu phộng)", "calo": 75}
+    {"name": "🥗 Salad dưa leo cà chua", "calo": 50},
+    {"name": "🥒 Rau củ luộc kho quẹt", "calo": 80},
+    {"name": "🍲 Canh bí đao nấu tôm khô", "calo": 70},
+    {"name": "🥬 Bắp cải luộc + 1 trứng luộc", "calo": 90}
 ]
 
-# --- 5. AI FUNCTIONS ---
-
-def ask_ai_calories(dish_name):
-    """Hỏi AI số calo (Dùng Regex lọc số để tránh lỗi)"""
-    try:
-        print(f"🍲 Đang hỏi AI: {dish_name}")
-        prompt = f"Món ăn: '{dish_name}'. Hãy ước lượng Calo cho 1 suất ăn này. Chỉ trả lời duy nhất 1 con số nguyên (Ví dụ: 450). Không viết thêm chữ."
-        
-        response = model.generate_content(prompt)
-        text = response.text
-        print(f"🤖 AI trả lời: {text}") # In ra xem AI nói gì
-        
-        # Lọc lấy số từ câu trả lời
-        numbers = re.findall(r'\d+', text)
-        
-        if numbers:
-            return int(numbers[0])
-        else:
-            return 300 # Mặc định nếu AI không đưa ra số
-            
-    except Exception as e:
-        print(f"❌ LỖI AI: {e}")
-        return 500 # Trả về 500 nếu lỗi mạng/key
+# --- 5. AI & LOGIC FUNCTIONS ---
 
 def ask_ai_feedback(start_w, final_w, goal, warnings):
+    """Giữ lại AI để nhận xét tổng kết cuối tuần cho bạn"""
     try:
         diff = final_w - start_w
         res = "giảm" if diff < 0 else "tăng"
-        
-        # Gửi danh sách vi phạm cho AI
         vi_pham = "; ".join(warnings) if warnings else "Không có vi phạm nào."
-        
-        prompt = f"""
-        Đóng vai HLV dinh dưỡng nghiêm khắc.
-        - Mục tiêu: {goal}. Kết quả: {res} {abs(diff)}kg.
-        - Lịch sử vi phạm tuần qua: {vi_pham}.
-        Hãy nhận xét ngắn gọn 3 câu, nhắc nhở nếu có vi phạm.
-        """
+        prompt = f"Đóng vai HLV dinh dưỡng. Mục tiêu: {goal}. Kết quả: {res} {abs(diff)}kg. Vi phạm: {vi_pham}. Nhận xét ngắn 2 câu."
         return model.generate_content(prompt).text
-    except: return "Kết quả tốt! Cố gắng duy trì nhé."
+    except: return "Kết quả tốt! Cố gắng duy trì nhé bạn."
 
 def create_plan(weight, height, age, gender, goal):
     if gender == 'male': bmr = 10 * weight + 6.25 * height - 5 * age + 5
@@ -129,12 +96,26 @@ def create_plan(weight, height, age, gender, goal):
         'profile': {'height': height, 'age': age, 'gender': gender, 'goal': goal},
         'start_weight': weight, 'final_weight': 0, 
         'base_target': base, 'daily_target': base,
-        'current_day': 1, 'current_meal': 0, 'balance': 0,
+        'current_day': 1, 'current_meal': 0,
+        'water_goal': 2000, # Mục tiêu 2 lít
+        'water_drank': 0,   # Lượng đã uống
         'warnings': [], 
         'menu_plan': menu, 'calorie_history': [0]*8, 'ai_feedback': ''
     }
 
 # --- 6. ROUTES ---
+
+@app.route('/add_water', methods=['POST'])
+@login_required
+def add_water():
+    app_data = session.get('app_data')
+    if app_data:
+        amount = int(request.form.get('amount', 250))
+        app_data['water_drank'] += amount
+        session['app_data'] = app_data
+        flash(f"Đã thêm {amount}ml nước. Giỏi quá bạn ơi! 💧", "success")
+    return redirect(url_for('index'))
+
 @app.route('/register', methods=['POST'])
 def register():
     username = request.form['username']
@@ -164,7 +145,6 @@ def index():
     app_data = session.get('app_data')
 
     if request.method == 'POST':
-        # 1. SETUP
         if 'setup_full' in request.form:
             try:
                 w = float(request.form['weight']); h = float(request.form['height']); a = int(request.form['age']); gen = request.form['gender']; goal = request.form['goal']
@@ -172,11 +152,7 @@ def index():
                 session['app_data'] = create_plan(w, h, a, gen, goal)
                 return redirect(url_for('index'))
             except: pass
-        elif 'setup_quick' in request.form:
-            session['app_data'] = create_plan(float(request.form['weight']), current_user.height, current_user.age, current_user.gender, request.form['goal'])
-            return redirect(url_for('index'))
-
-        # 2. UPDATE MEAL (LOGIC KỶ LUẬT)
+        
         elif 'update_meal' in request.form and app_data:
             day = str(app_data['current_day']); idx = app_data['current_meal']
             keys = {0: 'breakfast', 1: 'lunch', 2: 'dinner'}; key = keys[idx]
@@ -184,76 +160,46 @@ def index():
             
             c_name = request.form.get('custom_name')
             c_calo = request.form.get('custom_calo')
-            actual = 0
-
-            # Ưu tiên nhập số tay
+            
+            # --- ĐÃ BỎ AI TỰ TÍNH CALO ---
             if c_calo and c_calo.strip():
                 actual = float(c_calo)
-                if not c_name: c_name = "Món tự nhập"
-                plan[key]['name'], plan['is_custom'][idx] = c_name, True
-            
-            # Nếu dùng AI
-            elif request.form['update_type'] == 'custom':
-                actual = ask_ai_calories(c_name)
-                # Nếu AI lỗi 500 -> Báo lỗi
-                if actual == 500: flash(f"⚠️ Lỗi kết nối AI. Vui lòng kiểm tra mạng.", "danger")
-                
-                plan[key]['name'] = f"{c_name} (AI: {actual})"
-                plan['is_custom'][idx] = True
+                plan[key]['name'], plan['is_custom'][idx] = (c_name or "Món tự nhập"), True
             else:
                 actual = plan['targets'][idx]
 
-            # Cập nhật số đã ăn
             plan['eaten'][idx] = actual
             plan[key]['calo'] = actual
 
-            # --- KIỂM TRA SAU BỮA TRƯA (IDX=1) ---
+            # Logic phạt nếu ăn lố sáng + trưa
             if idx == 1:
-                total_an = sum(plan['eaten'][:2]) # Tổng Sáng + Trưa
-                daily_max = app_data['daily_target']
-                
-                # Nếu ăn quá 90% quota cả ngày
-                if total_an > daily_max * 0.9:
-                    msg = f"Ngày {day}: Ăn lố {total_an} kcal (Sáng+Trưa)"
-                    if 'warnings' not in app_data: app_data['warnings'] = []
-                    app_data['warnings'].append(msg)
-                    
-                    flash(f"🚨 CẢNH BÁO: Ăn quá nhiều! Bữa tối bị chuyển sang chế độ Ăn Nhẹ.", "danger")
-
-                    # Phạt: Đổi bữa tối
-                    light_dish = random.choice(LIGHT_MEALS)
-                    plan['dinner'] = light_dish
-                    plan['dinner']['name'] = "🚨 " + light_dish['name']
-                    plan['targets'][2] = light_dish['calo']
-                    plan['is_custom'][2] = True # Khóa lại
+                total_an = sum(plan['eaten'][:2])
+                if total_an > app_data['daily_target'] * 0.9:
+                    app_data['warnings'].append(f"Ngày {day}: Ăn lố {total_an} kcal")
+                    flash(f"🚨 Ăn lố rồi bạn ơi! Bữa tối phải ăn nhẹ thôi nhé.", "danger")
+                    light = random.choice(LIGHT_MEALS)
+                    plan['dinner'] = light
+                    plan['targets'][2] = light['calo']
 
             app_data['current_meal'] += 1
             if app_data['current_meal'] > 2:
                 app_data['calorie_history'][int(day)] = sum(plan['eaten'])
                 app_data['current_day'] += 1; app_data['current_meal'] = 0
-                flash(f"Hoàn thành Ngày {day}!", "success"); session['app_data'] = app_data; return redirect(url_for('index'))
+                app_data['water_drank'] = 0 # Reset nước mỗi ngày mới
             
             session['app_data'] = app_data
-            return redirect(url_for('index', day_view=day))
+            return redirect(url_for('index'))
 
-        # 3. FINAL
         elif 'submit_final_weight' in request.form:
             app_data['final_weight'] = float(request.form['final_weight'])
-            app_data['ai_feedback'] = ask_ai_feedback(
-                app_data['start_weight'], app_data['final_weight'], 
-                app_data['profile']['goal'], app_data.get('warnings', [])
-            )
+            app_data['ai_feedback'] = ask_ai_feedback(app_data['start_weight'], app_data['final_weight'], app_data['profile']['goal'], app_data.get('warnings', []))
             session['app_data'] = app_data; return redirect(url_for('index'))
-        
-        elif 'restart_option' in request.form:
-            session.pop('app_data', None); return redirect(url_for('index'))
 
     view_mode = 'dashboard'; menu_today = None; chart_data = []
     if app_data:
         chart_data = app_data['calorie_history'][1:]
-        req_day = request.args.get('day_view')
-        if req_day and int(req_day) <= app_data['current_day'] and int(req_day) <= 7:
-             view_mode = 'detail'; menu_today = app_data['menu_plan'][str(req_day)]
+        if str(app_data['current_day']) in app_data['menu_plan']:
+            menu_today = app_data['menu_plan'][str(app_data['current_day'])]
 
     return render_template('index.html', user=current_user, app_data=app_data, view_mode=view_mode, menu_today=menu_today, chart_data=chart_data)
 

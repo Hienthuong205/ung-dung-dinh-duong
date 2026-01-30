@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Nutrition Coach</title>
+    <title>Health Mate - Trợ Lý Sức Khỏe</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
+        .water-card { background: #f0f8ff; border: 2px solid #add8e6; border-radius: 20px; padding: 20px; margin-top: 20px; text-align: center; }
+        .btn-water { background: #00a8ff; color: white; border: none; padding: 8px 15px; border-radius: 10px; margin: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-water:hover { background: #0086cc; transform: scale(1.05); }
+        .progress-container { height: 25px; margin: 15px 0; background: #e0e0e0; border-radius: 12px; overflow: hidden; }
+        .progress-bar-water { background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); height: 100%; transition: 0.8s ease-out; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
-    <div style="font-size: 60px;">👩‍🍳</div>
-    <h2 style="color: var(--primary-color);">AI Đang Soạn Thực Đơn...</h2>
-    <p>Đang tính toán calo và chọn món ngon cho 7 ngày.</p>
+    <div style="font-size: 60px;">🥗</div>
+    <h2 style="color: var(--primary-color);">Đang Thiết Lập Lộ Trình...</h2>
+    <p>Hệ thống đang chuẩn bị menu và bộ đếm nước cho bạn!</p>
     <div class="loader" style="border-color: var(--primary-color); border-bottom-color: transparent; width: 50px; height: 50px;"></div>
 </div>
 
@@ -25,7 +30,7 @@
         <div class="auth-box">
             <div style="font-size: 50px; margin-bottom: 10px;">🥑</div>
             <h1 style="color: var(--primary-color);">Health Mate</h1>
-            <p style="color: #666; margin-bottom: 30px;">Trợ lý dinh dưỡng AI</p>
+            <p style="color: #666; margin-bottom: 30px;">Người bạn đồng hành sức khỏe</p>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %} 
                     {% for category, message in messages %}
@@ -41,130 +46,120 @@
                 </form>
                 <p style="margin-top: 20px; font-size: 14px;">Chưa có tài khoản? <span class="toggle-link" onclick="toggleAuth()">Đăng ký ngay</span></p>
             </div>
-            <div id="register-form" class="step-section">
+            <div id="register-form" class="step-section" style="display:none;">
                 <form action="/register" method="post">
-                    <div class="form-group"><input type="text" name="username" placeholder="Chọn tên đăng nhập" required></div>
-                    <div class="form-group"><input type="password" name="password" placeholder="Chọn mật khẩu" required></div>
+                    <div class="form-group"><input type="text" name="username" placeholder="Tên đăng nhập mới" required></div>
+                    <div class="form-group"><input type="password" name="password" placeholder="Mật khẩu mới" required></div>
                     <button type="submit" class="btn btn-primary" style="background: linear-gradient(45deg, #ff6b6b, #ff8e53);">Tạo Tài Khoản</button>
                 </form>
-                <p style="margin-top: 20px; font-size: 14px;">Đã có tài khoản? <span class="toggle-link" onclick="toggleAuth()">Đăng nhập</span></p>
+                <p style="margin-top: 20px; font-size: 14px;">Đã có tài khoản? <span class="toggle-link" onclick="toggleAuth()">Quay lại đăng nhập</span></p>
             </div>
         </div>
     {% else %}
         <div class="user-info">
-            <div class="user-name"><i class="fas fa-user-circle"></i> {{ user.username }}</div>
+            <div class="user-name"><i class="fas fa-user-circle"></i> {{ user.username }} (Chào bạn!)</div>
             <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Thoát</a>
         </div>
 
         {% if not app_data %}
-            {% if user.height and user.age %}
-                <div id="step-1" class="step-section active">
-                    <h2>👋 Chào mừng trở lại!</h2>
-                    <form method="post" onsubmit="showLoading()">
-                        <input type="hidden" name="setup_quick" value="1">
-                        <div class="form-group"><label>Cân nặng hiện tại (kg)</label><input type="number" step="0.1" name="weight" placeholder="VD: 60" required></div>
-                        <div class="form-group"><label>Mục tiêu</label><select name="goal"><option value="lose">📉 Giảm cân</option><option value="keep">⚖️ Giữ cân</option><option value="gain">📈 Tăng cân</option></select></div>
-                        <button type="submit" class="btn btn-primary">Tạo Lộ Trình Mới 🚀</button>
-                    </form>
-                    <div style="text-align:center; margin-top:15px;"><a href="#" onclick="showFullForm()" style="font-size:13px; color:#999;">Sửa hồ sơ gốc?</a></div>
-                </div>
-                <div id="full-setup-hidden" style="display:none;">
-                    <h2>📋 Cập nhật hồ sơ</h2>
-                    <form method="post" onsubmit="showLoading()">
-                        <input type="hidden" name="setup_full" value="1">
-                        <div class="form-group"><label>Cân nặng</label><input type="number" step="0.1" name="weight" required></div>
-                        <div class="form-group"><label>Chiều cao</label><input type="number" name="height" value="{{ user.height }}" required></div>
-                        <div class="form-group"><label>Tuổi</label><input type="number" name="age" value="{{ user.age }}" required></div>
-                        <div class="form-group"><label>Giới tính</label><select name="gender"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
-                        <div class="form-group"><label>Mục tiêu</label><select name="goal"><option value="lose">Giảm</option><option value="keep">Giữ</option><option value="gain">Tăng</option></select></div>
-                        <button type="submit" class="btn btn-primary">Lưu & Tạo Menu</button>
-                    </form>
-                </div>
-            {% else %}
-                <div id="step-1" class="step-section active">
-                    <h2>📋 Thiết Lập Hồ Sơ</h2>
-                    <form method="post" onsubmit="showLoading()">
-                        <input type="hidden" name="setup_full" value="1">
-                        <div class="form-group"><label>Cân nặng (kg)</label><input type="number" step="0.1" name="weight" placeholder="VD: 60" required></div>
-                        <div class="form-group"><label>Chiều cao (cm)</label><input type="number" name="height" placeholder="VD: 170" required></div>
-                        <div class="form-group"><label>Tuổi</label><input type="number" name="age" placeholder="VD: 25" required></div>
-                        <div class="form-group"><label>Giới tính</label><select name="gender"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
-                        <div class="form-group"><label>Mục tiêu</label><select name="goal"><option value="lose">📉 Giảm cân</option><option value="keep">⚖️ Giữ cân</option><option value="gain">📈 Tăng cân</option></select></div>
-                        <button type="submit" class="btn btn-primary">Tạo Lộ Trình AI 🚀</button>
-                    </form>
-                </div>
-            {% endif %}
+            <div id="step-1" class="step-section active">
+                <h2>📋 Thiết Lập Hồ Sơ</h2>
+                <form method="post" onsubmit="showLoading()">
+                    <input type="hidden" name="setup_full" value="1">
+                    <div class="form-group"><label>Cân nặng (kg)</label><input type="number" step="0.1" name="weight" placeholder="VD: 60" required></div>
+                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" name="height" placeholder="VD: 170" required></div>
+                    <div class="form-group"><label>Tuổi</label><input type="number" name="age" placeholder="VD: 25" required></div>
+                    <div class="form-group"><label>Giới tính</label><select name="gender"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
+                    <div class="form-group"><label>Mục tiêu</label><select name="goal"><option value="lose">📉 Giảm cân</option><option value="keep">⚖️ Giữ cân</option><option value="gain">📈 Tăng cân</option></select></div>
+                    <button type="submit" class="btn btn-primary">Bắt Đầu Hành Trình 🚀</button>
+                </form>
+            </div>
 
         {% elif app_data.current_day > 7 %}
             <div class="step-section active">
-                {% if app_data.final_weight == 0 %}
-                    <h2 style="color: var(--primary-color);">🎉 Hoàn Thành!</h2>
-                    <div style="text-align: center; margin: 30px 0; font-size: 80px;">🏆</div>
-                    <form method="post"><input type="hidden" name="submit_final_weight" value="1"><div class="form-group"><label>Cân nặng hiện tại:</label><input type="number" step="0.1" name="final_weight" required></div><button type="submit" class="btn btn-primary">Xem Kết Quả</button></form>
-                {% else %}
-                    <h2>📊 Tổng Kết</h2>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <div style="background: #e8f5e9; padding: 15px; border-radius: 15px; flex: 1; text-align: center;"><div style="font-size: 12px;">Bắt đầu</div><div style="font-size: 18px; font-weight: bold;">{{ app_data.start_weight }} kg</div></div>
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 15px; flex: 1; text-align: center;"><div style="font-size: 12px;">Kết thúc</div><div style="font-size: 18px; font-weight: bold;">{{ app_data.final_weight }} kg</div></div>
-                    </div>
-                    <div class="ai-box"><strong>🤖 AI Nhận xét:</strong><br>{{ app_data.ai_feedback }}</div>
-                    <div style="background: #fff; padding: 10px; border-radius: 15px; margin: 20px 0;"><canvas id="caloChart"></canvas></div>
-                    <form method="post"><input type="hidden" name="restart_option" value="1"><button type="submit" class="btn btn-primary">Vòng mới 🔄</button></form>
-                    <script>new Chart(document.getElementById('caloChart'), { type: 'line', data: { labels: ['N1','N2','N3','N4','N5','N6','N7'], datasets: [{ label: 'Calo', data: {{ chart_data | tojson }}, borderColor: '#00b09b', tension: 0.4, fill: true, backgroundColor: 'rgba(0, 176, 155, 0.1)' }] }, options: { plugins: { legend: { display: false } } } });</script>
-                {% endif %}
+                <h2>📊 Kết Quả Tuần Qua</h2>
+                <div class="ai-box"><strong>🤖 AI Phản hồi:</strong><br>{{ app_data.ai_feedback }}</div>
+                <div style="background: #fff; padding: 10px; border-radius: 15px; margin: 20px 0;"><canvas id="caloChart"></canvas></div>
+                <form method="post"><input type="hidden" name="restart_option" value="1"><button type="submit" class="btn btn-primary">Làm mới lộ trình 🔄</button></form>
+                <script>new Chart(document.getElementById('caloChart'), { type: 'line', data: { labels: ['N1','N2','N3','N4','N5','N6','N7'], datasets: [{ label: 'Calo Đã Ăn', data: {{ chart_data | tojson }}, borderColor: '#00b09b', tension: 0.4, fill: true, backgroundColor: 'rgba(0, 176, 155, 0.1)' }] } });</script>
             </div>
 
         {% else %}
             {% if view_mode == 'dashboard' %}
                 <div class="step-section active">
-                    <h2>📊 Tiến độ hoàn thành</h2>
-                    <div class="progress-wrapper"><div class="progress-info"><span>Tiến độ</span><span>{{ ((app_data.current_day - 1) / 7 * 100) | int }}%</span></div><div class="progress-bg"><div class="progress-fill" style="width: {{ ((app_data.current_day - 1) / 7 * 100) }}%;"></div></div></div>
-                    {% with messages = get_flashed_messages(with_categories=true) %} 
-                        {% if messages %} 
-                            {% for category, message in messages %}
-                                <div style="padding: 10px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; background: #e8f5e9; color: #2e7d32;">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %} 
-                    {% endwith %}
+                    <h2>📊 Dashboard Của Bạn</h2>
+                    
+                    <div class="water-card shadow-sm">
+                        <h4 style="color: #0077be;"><i class="fas fa-tint"></i> Theo Dõi Uống Nước</h4>
+                        {% set phan_tram = (app_data.water_drank / app_data.water_goal * 100)|round|int %}
+                        <div class="progress-container">
+                            <div class="progress-bar-water" style="width: {{ phan_tram if phan_tram <= 100 else 100 }}%;"></div>
+                        </div>
+                        <p style="font-weight: bold;">Tiến độ: {{ app_data.water_drank }} / {{ app_data.water_goal }} ml ({{ phan_tram }}%)</p>
+                        
+                        {% if phan_tram < 100 %}
+                            <p class="text-muted" style="font-size: 13px; font-style: italic;">"Bạn ơi, hãy uống thêm nước để thanh lọc cơ thể nhé!"</p>
+                        {% else %}
+                            <p style="color: #2e7d32; font-size: 13px; font-weight: bold;">✨ Chúc mừng! Bạn đã hoàn thành mục tiêu nước hôm nay.</p>
+                        {% endif %}
+
+                        <form action="{{ url_for('add_water') }}" method="POST">
+                            <button type="submit" name="amount" value="250" class="btn-water">+ 250ml (1 Ly)</button>
+                            <button type="submit" name="amount" value="500" class="btn-water">+ 500ml (1 Chai)</button>
+                        </form>
+                    </div>
+
+                    <h3 style="margin-top: 30px; font-size: 18px;">📅 Kế hoạch 7 ngày</h3>
                     <div class="days-grid">
                         {% for i in range(1, 8) %}
-                            {% if i < app_data.current_day %} <div class="day-card day-completed"><div class="day-num">Ngày {{ i }}</div><div class="day-status"><i class="fas fa-check"></i> Xong</div></div>
-                            {% elif i == app_data.current_day %} <a href="{{ url_for('index', day_view=i) }}" class="day-card day-active"><div class="day-num">Ngày {{ i }}</div><div class="day-status">Bắt đầu <i class="fas fa-play"></i></div></a>
-                            {% else %} <div class="day-card day-locked"><div class="day-num">Ngày {{ i }}</div><div class="day-status"><i class="fas fa-lock"></i> Khóa</div></div>
+                            {% if i < app_data.current_day %}
+                                <div class="day-card day-completed"><div class="day-num">Ngày {{ i }}</div><div class="day-status"><i class="fas fa-check"></i> Xong</div></div>
+                            {% elif i == app_data.current_day %}
+                                <a href="{{ url_for('index', day_view=i) }}" class="day-card day-active"><div class="day-num">Ngày {{ i }}</div><div class="day-status">Đang chạy <i class="fas fa-play"></i></div></a>
+                            {% else %}
+                                <div class="day-card day-locked"><div class="day-num">Ngày {{ i }}</div><div class="day-status"><i class="fas fa-lock"></i> Khóa</div></div>
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <a href="{{ url_for('index', action='reset') }}" style="display:block; text-align:center; margin-top:25px; color:#aaa; font-size:13px; text-decoration: none;">Cài đặt lại</a>
                 </div>
             {% elif view_mode == 'detail' %}
                 <div class="step-section active">
-                    <div style="display:flex; align-items:center; margin-bottom:20px;"><a href="{{ url_for('index') }}" style="background:#f1f3f5; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:#333; text-decoration:none;"><i class="fas fa-arrow-left"></i></a><h2 style="flex:1; margin:0;">Ngày {{ request.args.get('day_view') }}</h2></div>
-                    {% set meal_idx = app_data.current_meal %}<div class="progress-wrapper"><div class="progress-bg"><div class="progress-fill" style="width: {{ (meal_idx / 3 * 100) }}%;"></div></div></div>
+                    <div style="display:flex; align-items:center; margin-bottom:20px;">
+                        <a href="{{ url_for('index') }}" class="btn-back" style="text-decoration:none; color:#333;"><i class="fas fa-arrow-left"></i> Quay lại</a>
+                        <h2 style="flex:1; margin-left: 15px;">Ngày {{ request.args.get('day_view') }}</h2>
+                    </div>
+
                     <div class="menu-card">
-                        {% set meal_data = [{'k': 'breakfast', 'l': 'Sáng', 'i': 'fa-coffee'}, {'k': 'lunch', 'l': 'Trưa', 'i': 'fa-utensils'}, {'k': 'dinner', 'l': 'Tối', 'i': 'fa-moon'}] %}
+                        {% set meal_idx = app_data.current_meal %}
+                        {% set meal_data = [{'k': 'breakfast', 'l': 'Sáng'}, {'k': 'lunch', 'l': 'Trưa'}, {'k': 'dinner', 'l': 'Tối'}] %}
                         {% for i in range(3) %} {% set key = meal_data[i].k %}
                             <div class="meal-row {% if i < meal_idx %}meal-done{% elif i == meal_idx %}meal-active{% endif %}">
-                                <div class="meal-icon"><i class="fas {{ meal_data[i].i }}" style="color: {% if i==meal_idx %}var(--primary-color){% else %}#ccc{% endif %};"></i></div>
-                                <div class="meal-name">{{ menu_today[key]['name'] }}</div>
-                                <div class="meal-cal">{{ menu_today[key]['calo'] }}</div>
+                                <span class="meal-label">Bữa {{ meal_data[i].l }}:</span>
+                                <span class="meal-name">{{ menu_today[key]['name'] }}</span>
+                                <span class="meal-cal">{{ menu_today[key]['calo'] }} kcal</span>
                             </div>
                         {% endfor %}
                     </div>
-                    <div style="background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top:0; font-size: 18px;">Cập nhật Bữa {{ meal_data[meal_idx].l }}</h3>
-                        <form method="post" id="updateForm" enctype="multipart/form-data">
-                            <input type="hidden" name="update_meal" value="1"><input type="hidden" name="update_type" id="updateType" value="standard">
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <button type="button" onclick="subStd()" class="btn btn-finish" style="margin:0;"><i class="fas fa-check"></i> Đúng món</button>
-                                <button type="button" onclick="toggleCus()" class="btn btn-custom" style="margin:0;"><i class="fas fa-pen"></i> Món Khác</button>
-                            </div>
 
-                            <div id="customBox" class="custom-input-box">
-                                <label>Tên món:</label><input type="text" name="custom_name" placeholder="VD: Bún bò...">
-                                <label style="margin-top: 15px;">Calo (Để trống AI sẽ tự tính):</label><input type="number" name="custom_calo">
-                                <button type="button" onclick="subCus()" class="btn btn-primary" style="margin-top:20px; display:flex; justify-content:center; align-items:center;">Xử Lý Ngay <div class="loader" style="display:none"></div></button>
+                    <div class="update-box" style="background:#fff; padding:20px; border-radius:20px; margin-top:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+                        <h3>Cập nhật bữa {{ meal_data[meal_idx].l }}</h3>
+                        <form method="post" id="updateForm">
+                            <input type="hidden" name="update_meal" value="1">
+                            <input type="hidden" name="update_type" id="updateType" value="standard">
+                            
+                            <button type="button" onclick="subStd()" class="btn btn-primary" style="margin-bottom: 15px; width:100%;">Ghi nhận: Ăn theo thực đơn</button>
+                            
+                            <p style="font-size: 13px; color: #888; text-align:center;">--- HOẶC ---</p>
+                            
+                            <div class="form-group">
+                                <label>Tên món bạn đã ăn:</label>
+                                <input type="text" name="custom_name" placeholder="VD: Bún riêu, Phở bò...">
                             </div>
+                            <div class="form-group">
+                                <label>Lượng calo (nếu biết):</label>
+                                <input type="number" name="custom_calo" placeholder="Nhập số calo">
+                            </div>
+                            <button type="button" onclick="subCus()" class="btn btn-outline-primary" style="width:100%;">Lưu món bạn tự chọn</button>
                         </form>
                     </div>
                 </div>
@@ -174,13 +169,38 @@
 </div>
 
 <script>
-    function toggleAuth() { const login = document.getElementById('login-form'); const reg = document.getElementById('register-form'); if(login.style.display === 'none') { login.style.display = 'block'; reg.style.display = 'none'; } else { login.style.display = 'none'; reg.style.display = 'block'; } }
-    document.getElementById('register-form').style.display = 'none';
-    function subStd() { document.getElementById('updateType').value='standard'; document.getElementById('updateForm').submit(); }
-    function toggleCus() { var b = document.getElementById('customBox'); b.style.display = (b.style.display==='block')?'none':'block'; }
-    function subCus() { document.getElementById('updateType').value='custom'; var btn = document.querySelector('#customBox .btn-primary'); var loader = btn.querySelector('.loader'); btn.innerHTML = 'AI Đang Tính... '; btn.appendChild(loader); loader.style.display='inline-block'; btn.style.opacity = '0.7'; document.getElementById('updateForm').submit(); }
-    function showFullForm() { document.getElementById('step-1').style.display = 'none'; document.getElementById('full-setup-hidden').style.display = 'block'; }
-    function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
+  
+    function toggleAuth() { 
+        const login = document.getElementById('login-form'); 
+        const reg = document.getElementById('register-form'); 
+        if(login.style.display === 'none') { 
+            login.style.display = 'block'; reg.style.display = 'none'; 
+        } else { 
+            login.style.display = 'none'; reg.style.display = 'block'; 
+        } 
+    }
+    
+  
+    function subStd() { 
+        document.getElementById('updateType').value='standard'; 
+        document.getElementById('updateForm').submit(); 
+    }
+    
+
+    function subCus() { 
+        const name = document.querySelector('input[name="custom_name"]').value;
+        if (!name) { 
+            alert("Bạn ơi, hãy nhập tên món ăn đã nhé!"); 
+            return; 
+        }
+        document.getElementById('updateType').value='custom'; 
+        document.getElementById('updateForm').submit(); 
+    }
+    
+
+    function showLoading() { 
+        document.getElementById('loading-overlay').style.display = 'flex'; 
+    }
 </script>
 </body>
 </html>
